@@ -1,0 +1,69 @@
+* Questions/Found Answers
+** does this do anything to assure accurate timing?
+  - no.  technically, the step() function should take care of that,
+    but it doesn't appear to handle timing at all.
+  - see https://github.com/rehsd/Emul816or/blob/master/Emulator_65816/CPU.cs
+    for example of interrupt processing code (in C#).
+* What each file/class does
+** program.cc
+  defines setup() - initializes the emulator
+  defines loop() -  call emu816::step() once
+  defines load() -  a S19/S28 loader
+  defines main() -  processes options, calls emu816::reset(),
+                    then calls loop() in a loop until emu816::isStopped()
+
+** class wdc816 [wdc816.h/wdc816.cc]
+  Defines common types for 8-, 16- and 24-bit data values 
+  and a set of common functions for manipulating them.
+
+** class mem816 extends wdc816 [mem816.h/mem816.cc]
+  This class represents the emulator's memory and routines to access it.
+  - setMemory(), getByte(), getWord(), getAddr(),
+  - setByte(), setWord()
+    
+** class emu816 extends mem816 [emu816.h/emu816.cc]
+  This class contains the actual emulation code.
+*** defined in header
+  - defines FLAGS [czidxmvn -> b] -> p register
+  - defines REGS [8/16 bit -> b,w] -> a,x,y,sp,dp
+  - defines pc, pbr, dbr
+
+  - getCycles() - just returns value of cycles 
+                  cycles is set by each opcode function
+  - isStopped() - just returns value of stopped *how is stopped set?*
+  - pushByte(), pushWord(), pullByte(), pullWord() (inlined in header)
+  - defines address mode functions: (all inlined in header)
+    am_absl(), am_absx(), am_absy(), am_absi(), am_abxi(),
+    am_alng(), am_alnx(), am_abil(), am_dpag(), am_dpgx(),
+    am_dpgy(), am_dpgi(), am_dpix(), am_dpiy(), am_dpil(),
+    am_dily(), am_impl(), am_acc(),  am_immb(), am_immw(),
+    am_immm(), am_immx(), am_lrel(), am_rela(), am_srel(),
+    am_sriy()
+  - defines functions to set/clear flags directly: (inlined in header)
+    setn(), setv(), setd(), seti(), setz(), setc(), 
+  - defines functions to set/clear flags based on byte or word values 
+    setnz_b(), setnz_w()  (inlined in header)
+  - defines opcode functions: op_xxx()  (inlined in header)
+*** defined in .cc
+**** variables
+  union emu816::FLAGS		emu816::p;
+  emu816::Bit				emu816::e;
+  union emu816::REGS		emu816::a;
+  union emu816::REGS		emu816::x;
+  union emu816::REGS		emu816::y;
+  union emu816::REGS		emu816::sp;
+  union emu816::REGS		emu816::dp;
+  emu816::Word			emu816::pc;
+  emu816::Byte			emu816::pbr;
+  emu816::Byte			emu816::dbr;
+  bool					emu816::stopped;
+  bool					emu816::interrupted;
+  unsigned long			emu816::cycles;
+  bool					emu816::trace;
+**** methods
+  reset() - initializes registers, etc.
+  step() -  execute a single instruction or invoke an interrupt
+            *note* interrupt code DNE.
+            *note* this is the giant switch statement function.
+  
+  this file also defines some debugging methods, as a treat.
