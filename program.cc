@@ -188,15 +188,15 @@ int main(int argc, char **argv)
 	while (!emu816::isStopped ())
 		loop();
 
-#ifdef	LINUX
+#if defined(__APPLE__) || defined(LINUX)
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
 
 	double secs = (end.tv_sec + end.tv_nsec / 1000000000.0)
 		    - (start.tv_sec + start.tv_nsec / 1000000000.0);
 #else
-	QueryPerformanceCounter(&end);
+ 	QueryPerformanceCounter(&end);
 
-	double secs = (end.QuadPart - start.QuadPart) / (double) freq.QuadPart;
+ 	double secs = (end.QuadPart - start.QuadPart) / (double) freq.QuadPart;
 #endif
 
 	double speed = emu816::getCycles() / secs;
